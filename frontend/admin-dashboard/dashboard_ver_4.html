@@ -1,0 +1,2840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>RakshaSetu · Admin Dashboard</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background:
+        radial-gradient(
+          ellipse 900px 500px at 15% 0%,
+          rgba(224,122,63,0.16),
+          transparent 60%
+        ),
+        radial-gradient(
+          ellipse 700px 500px at 100% 30%,
+          rgba(178,90,50,0.14),
+          transparent 60%
+        ),
+        #14100e;
+
+      color: #f2e9e1;
+
+      font-family:
+        'Sora',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+
+      padding: 20px;
+      min-height: 100vh;
+      font-weight: 400;
+    }
+
+    .dark-card {
+      background: rgba(58, 44, 36, 0.38);
+      border: 1px solid rgba(224, 179, 148, 0.14);
+      border-radius: 20px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      backdrop-filter: blur(22px) saturate(140%);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: #fbf3ec;
+    }
+
+    .stat-label {
+      color: #b6a094;
+      font-size: 0.68rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .priority-badge {
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: inline-block;
+    }
+
+    .critical {
+      background: #d9636b;
+      color: #fff;
+    }
+
+    .high {
+      background: #e0975a;
+      color: #211510;
+    }
+
+    .medium {
+      background: #e8bf6f;
+      color: #211510;
+    }
+
+    .low {
+      background: #c7a27a;
+      color: #211510;
+    }
+
+    .tab-active {
+      border-bottom: 3px solid #e07a3f;
+      color: #fbf3ec;
+    }
+
+    .tab-inactive {
+      color: #b6a094;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab-inactive:hover {
+      color: #f2e9e1;
+      border-bottom: 3px solid rgba(224,179,148,0.25);
+    }
+
+    .resource-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 0.85rem;
+      border-bottom: 1px solid rgba(224,179,148,0.12);
+    }
+
+    .resource-row:last-child {
+      border-bottom: none;
+    }
+
+    .resource-bar-bg {
+      background: rgba(224,179,148,0.14);
+      border-radius: 20px;
+      height: 5px;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+
+    .resource-bar-fill {
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        #e07a3f,
+        #f2b25c
+      );
+      border-radius: 20px;
+    }
+
+    .filter-tab {
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: transparent;
+      border: 1px solid rgba(224,179,148,0.22);
+      color: #b6a094;
+    }
+
+    .filter-tab:hover {
+      background: rgba(224,179,148,0.1);
+      color: #f2e9e1;
+    }
+
+    .filter-tab-active {
+      background: rgba(224,122,63,0.22);
+      border-color: #e07a3f;
+      color: #fbf3ec;
+    }
+
+    .leaflet-container {
+      height: 520px;
+      width: 100%;
+      border-radius: 14px;
+      background: #1a140f;
+    }
+
+    .scroll-list {
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(224,179,148,0.25) transparent;
+    }
+
+    .scroll-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .scroll-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .scroll-list::-webkit-scrollbar-thumb {
+      background: rgba(224,179,148,0.25);
+      border-radius: 8px;
+    }
+
+    .btn-action {
+      padding: 6px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      border: none;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+
+    .btn-approve {
+      background: linear-gradient(
+        135deg,
+        #e07a3f,
+        #c76a35
+      );
+      color: #fff;
+    }
+
+    .btn-approve:hover {
+      background: linear-gradient(
+        135deg,
+        #ea8b53,
+        #d47845
+      );
+    }
+
+    .btn-modify {
+      background: #c7a27a;
+      color: #211510;
+    }
+
+    .btn-modify:hover {
+      background: #d4b28c;
+    }
+
+    .btn-reject {
+      background: #d9636b;
+      color: #fff;
+    }
+
+    .btn-reject:hover {
+      background: #e37a81;
+    }
+
+    .incident-list-item {
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.1s;
+      border-left: 3px solid transparent;
+    }
+
+    .incident-list-item:hover {
+      background: rgba(224,179,148,0.08);
+    }
+
+    .incident-list-item.selected {
+      background: rgba(224,122,63,0.14);
+      border-left-color: #e07a3f;
+    }
+
+    .priority-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .dot-critical {
+      background: #d9636b;
+    }
+
+    .dot-high {
+      background: #e0975a;
+    }
+
+    .dot-medium {
+      background: #e8bf6f;
+    }
+
+    .dot-low {
+      background: #c7a27a;
+    }
+
+    .leaflet-control-attribution {
+      background: rgba(20, 16, 14, 0.85) !important;
+      color: #b6a094 !important;
+      font-size: 9px !important;
+    }
+
+    .leaflet-control-attribution a {
+      color: #e07a3f !important;
+    }
+
+    .loading-pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.5;
+      }
+    }
+
+    .text-accent {
+      color: #e07a3f;
+    }
+
+    .border-accent {
+      border-color: #e07a3f;
+    }
+
+    .glow-text {
+      text-shadow:
+        0 0 34px rgba(224, 122, 63, 0.35);
+
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .bg-card {
+      background: rgba(58, 44, 36, 0.38);
+    }
+
+    .text-muted {
+      color: #b6a094;
+    }
+
+    .text-light {
+      color: #f2e9e1;
+    }
+
+    .api-error {
+      color: #d9636b;
+      font-size: 0.7rem;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="max-w-7xl mx-auto" id="app">
+
+  <!-- TOP BAR -->
+
+  <div
+    class="flex justify-between items-center mb-5 pb-4 border-b border-[rgba(224,179,148,0.14)]"
+  >
+    <div class="flex items-center gap-3">
+
+      <span
+        class="text-2xl font-bold tracking-tight text-white glow-text"
+      >
+        RakshaSetu
+      </span>
+
+      <span
+        class="bg-[rgba(224,122,63,0.18)] text-[#e07a3f] text-[10px] px-3 py-1 rounded-full border border-[rgba(224,179,148,0.22)] font-medium"
+      >
+        Admin
+      </span>
+
+    </div>
+
+    <div
+      class="flex items-center gap-5 text-xs text-[#b6a094]"
+    >
+
+      <span class="flex items-center gap-1.5">
+
+        <span
+          class="w-1.5 h-1.5 bg-emerald-400 rounded-full inline-block"
+          id="statusDot"
+        ></span>
+
+        <span id="statusLabel">
+          Connecting
+        </span>
+
+      </span>
+
+      <span>
+        Last update:
+        <span id="lastUpdate">
+          --
+        </span>
+      </span>
+
+    </div>
+  </div>
+
+
+  <!-- SUMMARY STATS -->
+
+  <div
+    class="grid grid-cols-5 gap-3 mb-5"
+    id="summaryCards"
+  >
+
+    <div
+      class="dark-card text-center border-l-4 border-l-[#e07a3f]"
+    >
+      <div
+        class="stat-number text-white"
+        id="totalReported"
+      >
+        --
+      </div>
+
+      <div class="stat-label">
+        Total Reported
+      </div>
+    </div>
+
+
+    <div
+      class="dark-card text-center border-l-4 border-l-[#d9636b]"
+    >
+      <div
+        class="stat-number text-[#d9636b]"
+        id="criticalCount"
+      >
+        --
+      </div>
+
+      <div class="stat-label">
+        Critical
+      </div>
+    </div>
+
+
+    <div
+      class="dark-card text-center border-l-4 border-l-[#e0975a]"
+    >
+      <div
+        class="stat-number text-[#e0975a]"
+        id="highCount"
+      >
+        --
+      </div>
+
+      <div class="stat-label">
+        High
+      </div>
+    </div>
+
+
+    <div
+      class="dark-card text-center border-l-4 border-l-[#e8bf6f]"
+    >
+      <div
+        class="stat-number text-[#e8bf6f]"
+        id="mediumCount"
+      >
+        --
+      </div>
+
+      <div class="stat-label">
+        Medium
+      </div>
+    </div>
+
+
+    <div
+      class="dark-card text-center border-l-4 border-l-[#e07a3f]"
+    >
+      <div
+        class="stat-number text-[#e07a3f]"
+        id="lowCount"
+      >
+        --
+      </div>
+
+      <div class="stat-label">
+        Low
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- MAIN LAYOUT -->
+
+  <div class="grid grid-cols-12 gap-4">
+
+    <!-- COL 1: RESOURCES -->
+
+    <div class="col-span-3 space-y-4">
+
+      <div
+        class="dark-card"
+        id="resourcePanel"
+      >
+
+        <div class="flex items-center justify-between mb-3">
+
+          <h3
+            class="font-semibold text-[#f2e9e1] text-sm uppercase tracking-wider"
+          >
+            Resource Inventory
+          </h3>
+
+          <span
+            class="text-[10px] bg-[rgba(224,122,63,0.18)] text-[#e07a3f] px-2 py-0.5 rounded-full border border-[rgba(224,179,148,0.22)]"
+          >
+            live
+          </span>
+
+        </div>
+
+        <div
+          id="resourceList"
+          class="space-y-2"
+        >
+          <div
+            class="loading-pulse text-[#b6a094] text-sm"
+          >
+            Loading resources...
+          </div>
+        </div>
+
+        <div
+          class="mt-3 pt-3 border-t border-[rgba(224,179,148,0.14)] flex justify-between text-sm"
+        >
+          <span class="text-[#b6a094]">
+            Available / Total
+          </span>
+
+          <span
+            class="font-medium text-white"
+            id="totalResources"
+          >
+            --
+          </span>
+        </div>
+
+        <div
+          class="flex flex-wrap gap-1.5 mt-3"
+          id="resourceFilters"
+        >
+
+          <span
+            class="filter-tab filter-tab-active"
+            data-filter="all"
+          >
+            All
+          </span>
+
+          <span
+            class="filter-tab"
+            data-filter="available"
+          >
+            Available
+          </span>
+
+          <span
+            class="filter-tab"
+            data-filter="assigned"
+          >
+            Assigned
+          </span>
+
+          <span
+            class="filter-tab"
+            data-filter="unavailable"
+          >
+            Unavailable
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="dark-card">
+
+        <h4
+          class="text-xs font-semibold text-[#b6a094] uppercase tracking-wider mb-3"
+        >
+          Priority Breakdown
+        </h4>
+
+        <div
+          class="space-y-1.5 text-sm"
+          id="priorityBreakdown"
+        >
+
+          <div class="flex justify-between">
+            <span>
+              <span class="priority-dot dot-critical"></span>
+              Critical
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="pCritical"
+            >
+              --
+            </span>
+          </div>
+
+
+          <div class="flex justify-between">
+            <span>
+              <span class="priority-dot dot-high"></span>
+              High
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="pHigh"
+            >
+              --
+            </span>
+          </div>
+
+
+          <div class="flex justify-between">
+            <span>
+              <span class="priority-dot dot-medium"></span>
+              Medium
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="pMedium"
+            >
+              --
+            </span>
+          </div>
+
+
+          <div class="flex justify-between">
+            <span>
+              <span class="priority-dot dot-low"></span>
+              Low
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="pLow"
+            >
+              --
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- COL 2: MAP + INCIDENT LIST -->
+
+    <div class="col-span-6 space-y-4">
+
+      <div class="dark-card p-2">
+
+        <div
+          id="map"
+          class="leaflet-container"
+        ></div>
+
+        <div
+          class="flex justify-between text-[10px] text-[#b6a094] mt-1.5 px-1"
+        >
+
+          <span>
+            📍 Assam · Click marker to select
+          </span>
+
+          <span id="incidentCountMap">
+            0 incidents
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="dark-card">
+
+        <div
+          class="flex items-center justify-between mb-3"
+        >
+
+          <h3
+            class="font-semibold text-[#f2e9e1] text-sm uppercase tracking-wider"
+          >
+            Incidents
+          </h3>
+
+          <span
+            class="text-xs text-[#b6a094]"
+            id="totalIncidentsLabel"
+          >
+            0 total
+          </span>
+
+        </div>
+
+
+        <div
+          class="flex gap-4 border-b border-[rgba(224,179,148,0.14)] mb-3 text-xs"
+          id="incidentTabs"
+        >
+
+          <span
+            class="pb-2 px-1 tab-active cursor-pointer font-medium"
+            data-tab="all"
+          >
+            All
+          </span>
+
+          <span
+            class="pb-2 px-1 tab-inactive cursor-pointer"
+            data-tab="critical"
+          >
+            Critical
+          </span>
+
+          <span
+            class="pb-2 px-1 tab-inactive cursor-pointer"
+            data-tab="high"
+          >
+            High
+          </span>
+
+          <span
+            class="pb-2 px-1 tab-inactive cursor-pointer"
+            data-tab="medium"
+          >
+            Medium
+          </span>
+
+          <span
+            class="pb-2 px-1 tab-inactive cursor-pointer"
+            data-tab="low"
+          >
+            Low
+          </span>
+
+        </div>
+
+
+        <div
+          class="scroll-list"
+          id="incidentList"
+        >
+          <div
+            class="loading-pulse text-[#b6a094] text-sm"
+          >
+            Loading incidents...
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- COL 3: SELECTED INCIDENT + ALLOCATION -->
+
+    <div class="col-span-3 space-y-4">
+
+      <div
+        class="dark-card"
+        id="selectedPanel"
+      >
+
+        <div
+          class="flex items-center justify-between mb-2"
+        >
+
+          <h3
+            class="font-semibold text-[#f2e9e1] text-sm uppercase tracking-wider"
+          >
+            Allocation Plan
+          </h3>
+
+          <span
+            id="selectedId"
+            class="text-xs text-[#b6a094] font-mono"
+          >
+            --
+          </span>
+
+        </div>
+
+
+        <div
+          id="incidentHeader"
+          class="flex items-center justify-between"
+        >
+
+          <div>
+            <span
+              class="text-lg font-bold text-white"
+              id="incidentTitle"
+            >
+              Select an incident
+            </span>
+          </div>
+
+          <span
+            class="priority-badge critical"
+            id="priorityBadge"
+          >
+            --
+          </span>
+
+        </div>
+
+
+        <div
+          class="text-sm text-[#b6a094] mt-0.5"
+        >
+          Score:
+          <span
+            id="priorityScore"
+            class="text-white font-medium"
+          >
+            --
+          </span>
+        </div>
+
+
+        <hr
+          class="my-3 border-[rgba(224,179,148,0.14)]"
+        />
+
+
+        <div
+          class="space-y-1.5 text-sm"
+          id="incidentDetails"
+        >
+
+          <div class="flex justify-between">
+            <span class="text-[#b6a094]">
+              Affected
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="affectedPeople"
+            >
+              --
+            </span>
+          </div>
+
+
+          <div class="flex justify-between">
+            <span class="text-[#b6a094]">
+              Injured
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="injuredPeople"
+            >
+              --
+            </span>
+          </div>
+
+
+          <div class="flex justify-between">
+            <span class="text-[#b6a094]">
+              Trapped
+            </span>
+
+            <span
+              class="text-white font-medium"
+              id="trappedPeople"
+            >
+              --
+            </span>
+          </div>
+
+        </div>
+
+
+        <hr
+          class="my-3 border-[rgba(224,179,148,0.14)]"
+        />
+
+
+        <h4
+          class="text-xs font-semibold text-[#b6a094] uppercase tracking-wider mb-2"
+        >
+          Recommended Resources
+        </h4>
+
+
+        <div
+          class="space-y-1 text-sm"
+          id="allocationResources"
+        >
+          <div class="text-[#b6a094] text-sm">
+            No allocation
+          </div>
+        </div>
+
+
+        <div
+          class="mt-2 text-xs text-[#b6a094]"
+          id="allocationReasons"
+        >
+          Reasons: --
+        </div>
+
+
+        <div
+          class="mt-3 pt-3 border-t border-[rgba(224,179,148,0.14)] flex items-center gap-2"
+        >
+
+          <span class="text-xs text-[#b6a094]">
+            Status:
+          </span>
+
+          <span
+            class="text-xs font-medium text-yellow-400"
+            id="allocationStatus"
+          >
+            --
+          </span>
+
+        </div>
+
+
+        <div class="flex gap-2 mt-3">
+
+          <button
+            class="btn-action btn-approve"
+            onclick="handleAction('approve')"
+          >
+            Approve
+          </button>
+
+          <button
+            class="btn-action btn-modify"
+            onclick="handleAction('modify')"
+          >
+            Modify
+          </button>
+
+          <button
+            class="btn-action btn-reject"
+            onclick="handleAction('reject')"
+          >
+            Reject
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="dark-card"
+        id="quickStats"
+      >
+
+        <h4
+          class="text-xs font-semibold text-[#b6a094] uppercase tracking-wider mb-2"
+        >
+          Quick Stats
+        </h4>
+
+        <div
+          class="flex justify-between text-xs"
+        >
+          <span class="text-[#b6a094]">
+            Critical
+          </span>
+
+          <span
+            class="text-[#d9636b] font-medium"
+            id="qCritical"
+          >
+            --
+          </span>
+        </div>
+
+
+        <div
+          class="flex justify-between text-xs mt-1"
+        >
+          <span class="text-[#b6a094]">
+            High
+          </span>
+
+          <span
+            class="text-[#e0975a] font-medium"
+            id="qHigh"
+          >
+            --
+          </span>
+        </div>
+
+
+        <div
+          class="flex justify-between text-xs mt-1"
+        >
+          <span class="text-[#b6a094]">
+            Medium
+          </span>
+
+          <span
+            class="text-[#e8bf6f] font-medium"
+            id="qMedium"
+          >
+            --
+          </span>
+        </div>
+
+
+        <div
+          class="flex justify-between text-xs mt-1"
+        >
+          <span class="text-[#b6a094]">
+            Low
+          </span>
+
+          <span
+            class="text-[#e07a3f] font-medium"
+            id="qLow"
+          >
+            --
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div
+    class="mt-6 pt-3 border-t border-[rgba(224,179,148,0.14)] flex justify-between text-[10px] text-[#8a7a6e]"
+  >
+    <span>
+      RakshaSetu · SIH Prototype Module 5 · Admin
+    </span>
+
+    <span>
+      Thin, reliable, authority-first
+    </span>
+  </div>
+
+</div>
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="config.js"></script>
+
+<script>
+
+  // ============================================================
+  // CONFIGURATION
+  // ============================================================
+
+  const API_BASE =
+    window.API_BASE || "http://127.0.0.1:8000";
+
+  const REFRESH_INTERVAL_MS = 5000;
+
+
+  // ============================================================
+  // STATE
+  // ============================================================
+
+  let incidents = [];
+  let resources = [];
+  let summary = {};
+  let allocations = {};
+
+  let selectedId = null;
+
+  let map = null;
+  let markers = {};
+
+  let activeIncidentFilter = "all";
+  let activeResourceFilter = "all";
+
+  let loading = false;
+
+
+  // ============================================================
+  // DOM REFERENCES
+  // ============================================================
+
+  const $ = id =>
+    document.getElementById(id);
+
+  const totalReported =
+    $("totalReported");
+
+  const criticalCount =
+    $("criticalCount");
+
+  const highCount =
+    $("highCount");
+
+  const mediumCount =
+    $("mediumCount");
+
+  const lowCount =
+    $("lowCount");
+
+  const resourceList =
+    $("resourceList");
+
+  const totalResources =
+    $("totalResources");
+
+  const incidentListEl =
+    $("incidentList");
+
+  const totalIncidentsLabel =
+    $("totalIncidentsLabel");
+
+  const incidentCountMap =
+    $("incidentCountMap");
+
+  const selectedIdEl =
+    $("selectedId");
+
+  const incidentTitle =
+    $("incidentTitle");
+
+  const priorityBadge =
+    $("priorityBadge");
+
+  const priorityScore =
+    $("priorityScore");
+
+  const affectedPeople =
+    $("affectedPeople");
+
+  const injuredPeople =
+    $("injuredPeople");
+
+  const trappedPeople =
+    $("trappedPeople");
+
+  const allocationResources =
+    $("allocationResources");
+
+  const allocationReasons =
+    $("allocationReasons");
+
+  const allocationStatus =
+    $("allocationStatus");
+
+  const lastUpdate =
+    $("lastUpdate");
+
+  const statusLabel =
+    $("statusLabel");
+
+  const statusDot =
+    $("statusDot");
+
+  const pCritical =
+    $("pCritical");
+
+  const pHigh =
+    $("pHigh");
+
+  const pMedium =
+    $("pMedium");
+
+  const pLow =
+    $("pLow");
+
+  const qCritical =
+    $("qCritical");
+
+  const qHigh =
+    $("qHigh");
+
+  const qMedium =
+    $("qMedium");
+
+  const qLow =
+    $("qLow");
+
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  function formatDate(value) {
+
+    if (!value) {
+      return "--";
+    }
+
+    try {
+      return new Date(value)
+        .toLocaleString();
+    } catch {
+      return "--";
+    }
+  }
+
+
+  function escapeHtml(value) {
+
+    if (value === null ||
+        value === undefined) {
+      return "";
+    }
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+
+  function normalizePriority(value) {
+
+    const normalized =
+      String(value || "low")
+        .trim()
+        .toLowerCase();
+
+    if (
+      ["critical", "high", "medium", "low"]
+        .includes(normalized)
+    ) {
+      return normalized;
+    }
+
+    return "low";
+  }
+
+
+  function normalizeResourceType(value) {
+
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replaceAll("_", " ");
+  }
+
+
+  function displayResourceType(value) {
+
+    const normalized =
+      normalizeResourceType(value);
+
+    if (!normalized) {
+      return "Resource";
+    }
+
+    return normalized
+      .split(" ")
+      .map(
+        word =>
+          word.charAt(0).toUpperCase()
+          + word.slice(1)
+      )
+      .join(" ");
+  }
+
+
+  // ============================================================
+  // API
+  // ============================================================
+
+  async function apiFetch(
+    path,
+    options = {}
+  ) {
+
+    const response =
+      await fetch(
+        `${API_BASE}${path}`,
+        {
+          ...options,
+          headers: {
+            "Content-Type":
+              "application/json",
+            ...(options.headers || {})
+          }
+        }
+      );
+
+    if (!response.ok) {
+
+      let message =
+        `HTTP ${response.status}`;
+
+      try {
+
+        const errorData =
+          await response.json();
+
+        if (errorData.detail) {
+          message =
+            `${message}: ${errorData.detail}`;
+        }
+
+      } catch {
+        // Ignore non-JSON errors.
+      }
+
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+
+  // ============================================================
+  // LOAD SUMMARY
+  // ============================================================
+
+  async function loadSummary() {
+
+    const data =
+      await apiFetch(
+        "/dashboard/summary"
+      );
+
+    summary = data || {};
+
+    updateSummary(summary);
+  }
+
+
+  function updateSummary(s) {
+
+    totalReported.textContent =
+      s.total_reported_incidents
+      ?? 0;
+
+    criticalCount.textContent =
+      s.critical_incidents
+      ?? 0;
+
+    highCount.textContent =
+      s.high_priority_incidents
+      ?? 0;
+
+    mediumCount.textContent =
+      s.medium_priority_incidents
+      ?? 0;
+
+    lowCount.textContent =
+      s.low_priority_incidents
+      ?? 0;
+  }
+
+
+  // ============================================================
+  // LOAD INCIDENTS
+  // ============================================================
+
+  async function loadIncidents() {
+
+    const data =
+      await apiFetch(
+        "/dashboard/incidents"
+      );
+
+    incidents =
+      Array.isArray(data?.incidents)
+        ? data.incidents
+        : [];
+
+    renderIncidentList(
+      activeIncidentFilter
+    );
+
+    updateMap();
+
+    updatePriorityBreakdown();
+    updateQuickStats();
+
+    totalReported.textContent =
+      summary.total_reported_incidents
+      ?? incidents.length;
+  }
+
+
+  // ============================================================
+  // LOAD RESOURCES
+  // ============================================================
+
+  async function loadResources() {
+
+    const data =
+      await apiFetch(
+        "/dashboard/resources"
+      );
+
+    resources =
+      Array.isArray(data?.resources)
+        ? data.resources
+        : [];
+
+    renderResources();
+  }
+
+
+  // ============================================================
+  // LOAD ALL DATA
+  // ============================================================
+
+  async function loadData(
+    preserveSelection = true
+  ) {
+
+    if (loading) {
+      return;
+    }
+
+    loading = true;
+
+    try {
+
+      await Promise.all([
+        loadSummary(),
+        loadIncidents(),
+        loadResources()
+      ]);
+
+      statusLabel.textContent =
+        "Online";
+
+      statusDot.className =
+        "w-1.5 h-1.5 bg-emerald-400 rounded-full inline-block";
+
+      lastUpdate.textContent =
+        new Date().toLocaleTimeString();
+
+      if (
+        preserveSelection &&
+        selectedId
+      ) {
+
+        const stillExists =
+          incidents.some(
+            incident =>
+              incident.incident_id
+              === selectedId
+          );
+
+        if (stillExists) {
+
+          await selectIncident(
+            selectedId,
+            false
+          );
+
+        } else {
+
+          selectedId = null;
+
+          clearSelectedIncident();
+        }
+
+      } else if (
+        incidents.length > 0 &&
+        !selectedId
+      ) {
+
+        await selectIncident(
+          incidents[0].incident_id,
+          false
+        );
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Dashboard API error:",
+        error
+      );
+
+      statusLabel.textContent =
+        "Backend error";
+
+      statusDot.className =
+        "w-1.5 h-1.5 bg-red-500 rounded-full inline-block";
+
+    } finally {
+
+      loading = false;
+    }
+  }
+
+
+  // ============================================================
+  // RESOURCES
+  // ============================================================
+
+  function renderResources() {
+
+    if (!resources.length) {
+
+      resourceList.innerHTML =
+        `
+        <div class="text-[#b6a094] text-sm">
+          No resources available
+        </div>
+        `;
+
+      totalResources.textContent =
+        "0 / 0";
+
+      return;
+    }
+
+
+    let filtered =
+      resources;
+
+    if (
+      activeResourceFilter !== "all"
+    ) {
+
+      filtered =
+        resources.filter(
+          resource => {
+
+            const status =
+              String(
+                resource.status || ""
+              )
+              .trim()
+              .toLowerCase();
+
+            if (
+              activeResourceFilter
+              === "available"
+            ) {
+              return status
+                === "available";
+            }
+
+            if (
+              activeResourceFilter
+              === "assigned"
+            ) {
+              return status
+                === "assigned";
+            }
+
+            if (
+              activeResourceFilter
+              === "unavailable"
+            ) {
+              return (
+                status !== "available"
+                &&
+                status !== "assigned"
+              );
+            }
+
+            return true;
+          }
+        );
+    }
+
+
+    // ----------------------------------------------------------
+    // Support both:
+    //
+    // 1. Raw resources:
+    //    { resource_id, resource_type, status, ... }
+    //
+    // 2. Aggregated dashboard resources:
+    //    { resource_type, total, available, assigned, ... }
+    // ----------------------------------------------------------
+
+    const isAggregated =
+      resources.some(
+        resource =>
+          resource.total !== undefined
+      );
+
+
+    if (isAggregated) {
+
+      renderAggregatedResources(
+        filtered
+      );
+
+      return;
+    }
+
+
+    renderRawResources(
+      filtered
+    );
+  }
+
+
+  function renderAggregatedResources(
+    filtered
+  ) {
+
+    let html = "";
+
+    let total = 0;
+    let available = 0;
+    let assigned = 0;
+    let unavailable = 0;
+
+
+    filtered.forEach(resource => {
+
+      const resourceTotal =
+        Number(resource.total) || 0;
+
+      const resourceAvailable =
+        Number(resource.available) || 0;
+
+      const resourceAssigned =
+        Number(resource.assigned) || 0;
+
+      const resourceUnavailable =
+        Number(resource.unavailable) || 0;
+
+      const pct =
+        resourceTotal > 0
+          ? Math.round(
+              (
+                resourceAvailable
+                / resourceTotal
+              ) * 100
+            )
+          : 0;
+
+
+      html +=
+        `
+        <div>
+
+          <div class="resource-row">
+
+            <span>
+              ${escapeHtml(
+                displayResourceType(
+                  resource.resource_type
+                )
+              )}
+            </span>
+
+            <span class="text-white">
+
+              ${resourceAvailable}
+
+              <span class="text-[#b6a094]">
+                / ${resourceTotal}
+              </span>
+
+            </span>
+
+          </div>
+
+          <div class="resource-bar-bg">
+
+            <div
+              class="resource-bar-fill"
+              style="width:${pct}%"
+            ></div>
+
+          </div>
+
+          <div class="text-[10px] text-[#8a7a6e] mt-1">
+            Assigned ${resourceAssigned}
+            · Unavailable ${resourceUnavailable}
+          </div>
+
+        </div>
+        `;
+
+
+      total += resourceTotal;
+      available += resourceAvailable;
+      assigned += resourceAssigned;
+      unavailable += resourceUnavailable;
+    });
+
+
+    if (!html) {
+
+      html =
+        `
+        <div class="text-[#b6a094] text-sm">
+          No matching resources
+        </div>
+        `;
+    }
+
+
+    resourceList.innerHTML =
+      html;
+
+    totalResources.textContent =
+      `${available} / ${total}`;
+  }
+
+
+  function renderRawResources(
+    filtered
+  ) {
+
+    let html = "";
+
+    filtered.forEach(resource => {
+
+      const status =
+        String(
+          resource.status || "unknown"
+        )
+        .trim()
+        .toLowerCase();
+
+
+      const statusClass =
+        status === "available"
+          ? "text-emerald-400"
+          : status === "assigned"
+            ? "text-yellow-400"
+            : "text-red-400";
+
+
+      html +=
+        `
+        <div class="py-1.5 border-b border-[rgba(224,179,148,0.12)]">
+
+          <div class="flex justify-between">
+
+            <span class="text-white text-xs">
+              ${escapeHtml(
+                resource.resource_id
+              )}
+            </span>
+
+            <span
+              class="text-xs ${statusClass}"
+            >
+              ${escapeHtml(status)}
+            </span>
+
+          </div>
+
+          <div class="text-[10px] text-[#8a7a6e] mt-0.5">
+            ${escapeHtml(
+              displayResourceType(
+                resource.resource_type
+              )
+            )}
+          </div>
+
+        </div>
+        `;
+    });
+
+
+    if (!html) {
+
+      html =
+        `
+        <div class="text-[#b6a094] text-sm">
+          No matching resources
+        </div>
+        `;
+    }
+
+
+    resourceList.innerHTML =
+      html;
+
+
+    const total =
+      resources.length;
+
+    const available =
+      resources.filter(
+        resource =>
+          resource.status
+          === "available"
+      ).length;
+
+
+    totalResources.textContent =
+      `${available} / ${total}`;
+  }
+
+
+  // ============================================================
+  // INCIDENT LIST
+  // ============================================================
+
+  function renderIncidentList(
+    filter = "all"
+  ) {
+
+    activeIncidentFilter =
+      filter;
+
+
+    const filtered =
+      filter === "all"
+        ? incidents
+        : incidents.filter(
+            incident =>
+              normalizePriority(
+                incident.priority_level
+              )
+              === filter
+          );
+
+
+    totalIncidentsLabel.textContent =
+      `${filtered.length} total`;
+
+
+    if (!filtered.length) {
+
+      incidentListEl.innerHTML =
+        `
+        <div class="text-[#b6a094] text-sm">
+          No incidents
+        </div>
+        `;
+
+      return;
+    }
+
+
+    let html = "";
+
+
+    filtered.forEach(incident => {
+
+      const priority =
+        normalizePriority(
+          incident.priority_level
+        );
+
+      const selected =
+        incident.incident_id
+        === selectedId
+          ? "selected"
+          : "";
+
+
+      html +=
+        `
+        <div
+          class="incident-list-item ${selected}"
+          data-id="${escapeHtml(
+            incident.incident_id
+          )}"
+        >
+
+          <div
+            class="flex justify-between items-center"
+          >
+
+            <div
+              class="flex items-center gap-2"
+            >
+
+              <span
+                class="priority-dot dot-${priority}"
+              ></span>
+
+              <span
+                class="font-mono text-xs text-[#b6a094]"
+              >
+                ${escapeHtml(
+                  incident.incident_id
+                )}
+              </span>
+
+              <span
+                class="text-sm text-white"
+              >
+                ${escapeHtml(
+                  incident.location
+                  || incident.location_text
+                  || "Unknown location"
+                )}
+              </span>
+
+            </div>
+
+            <span
+              class="priority-badge ${priority}"
+            >
+              ${priority}
+            </span>
+
+          </div>
+
+        </div>
+        `;
+    });
+
+
+    incidentListEl.innerHTML =
+      html;
+
+
+    document
+      .querySelectorAll(
+        ".incident-list-item"
+      )
+      .forEach(element => {
+
+        element.addEventListener(
+          "click",
+          () =>
+            selectIncident(
+              element.dataset.id
+            )
+        );
+
+      });
+  }
+
+
+  // ============================================================
+  // MAP
+  // ============================================================
+
+  function initMap() {
+
+    if (map) {
+      return;
+    }
+
+
+    map =
+      L.map("map")
+        .setView(
+          [26.2, 93.0],
+          7
+        );
+
+
+    L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        attribution:
+          "&copy; Esri"
+      }
+    ).addTo(map);
+  }
+
+
+  function updateMap() {
+
+    initMap();
+
+
+    Object
+      .values(markers)
+      .forEach(
+        marker =>
+          map.removeLayer(marker)
+      );
+
+
+    markers = {};
+
+
+    incidentCountMap.textContent =
+      `${incidents.length} incidents`;
+
+
+    incidents.forEach(incident => {
+
+      const latitude =
+        Number(
+          incident.latitude
+        );
+
+      const longitude =
+        Number(
+          incident.longitude
+        );
+
+
+      if (
+        !Number.isFinite(latitude)
+        ||
+        !Number.isFinite(longitude)
+      ) {
+        return;
+      }
+
+
+      const priority =
+        normalizePriority(
+          incident.priority_level
+        );
+
+
+      const color =
+        priority === "critical"
+          ? "#d9636b"
+          : priority === "high"
+            ? "#e0975a"
+            : priority === "medium"
+              ? "#e8bf6f"
+              : "#e07a3f";
+
+
+      const marker =
+        L.circleMarker(
+          [
+            latitude,
+            longitude
+          ],
+          {
+            radius: 9,
+            fillColor: color,
+            color: "#fff",
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.85
+          }
+        )
+        .addTo(map);
+
+
+      marker.bindPopup(
+        `
+        <b>
+          ${escapeHtml(
+            incident.incident_id
+          )}
+        </b>
+
+        ${escapeHtml(
+          incident.incident_type
+          || "incident"
+        )}
+
+        <br>
+
+        ${escapeHtml(
+          incident.location
+          || incident.location_text
+          || ""
+        )}
+
+        <br>
+
+        <span
+          class="priority-badge ${priority}"
+        >
+          ${priority}
+        </span>
+        `
+      );
+
+
+      marker.on(
+        "click",
+        () =>
+          selectIncident(
+            incident.incident_id
+          )
+      );
+
+
+      markers[
+        incident.incident_id
+      ] = marker;
+    });
+
+
+    const coords =
+      incidents
+        .filter(
+          incident =>
+            Number.isFinite(
+              Number(
+                incident.latitude
+              )
+            )
+            &&
+            Number.isFinite(
+              Number(
+                incident.longitude
+              )
+            )
+        )
+        .map(
+          incident => [
+            Number(
+              incident.latitude
+            ),
+            Number(
+              incident.longitude
+            )
+          ]
+        );
+
+
+    if (coords.length) {
+
+      map.fitBounds(
+        coords,
+        {
+          padding: [
+            30,
+            30
+          ]
+        }
+      );
+    }
+  }
+
+
+  // ============================================================
+  // INCIDENT SELECTION
+  // ============================================================
+
+  async function selectIncident(
+    id,
+    fetchDetails = true
+  ) {
+
+    selectedId = id;
+
+
+    const incident =
+      incidents.find(
+        item =>
+          item.incident_id
+          === id
+      );
+
+
+    if (!incident) {
+      return;
+    }
+
+
+    document
+      .querySelectorAll(
+        ".incident-list-item"
+      )
+      .forEach(
+        element =>
+          element.classList.toggle(
+            "selected",
+            element.dataset.id
+            === id
+          )
+      );
+
+
+    let detail =
+      incident;
+
+
+    if (fetchDetails) {
+
+      try {
+
+        detail =
+          await apiFetch(
+            `/dashboard/incidents/${encodeURIComponent(id)}`
+          );
+
+      } catch (error) {
+
+        console.warn(
+          "Incident detail request failed:",
+          error
+        );
+
+      }
+    }
+
+
+    const merged =
+      {
+        ...incident,
+        ...(detail || {})
+      };
+
+
+    incidents =
+      incidents.map(
+        item =>
+          item.incident_id === id
+            ? merged
+            : item
+      );
+
+
+    selectedIdEl.textContent =
+      id;
+
+
+    const type =
+      String(
+        merged.incident_type
+        || "incident"
+      );
+
+
+    incidentTitle.textContent =
+      `${id} – ${
+        type.charAt(0).toUpperCase()
+        + type.slice(1)
+      }`;
+
+
+    const priority =
+      normalizePriority(
+        merged.priority_level
+      );
+
+
+    priorityBadge.textContent =
+      priority
+        .charAt(0).toUpperCase()
+        + priority.slice(1);
+
+
+    priorityBadge.className =
+      `priority-badge ${priority}`;
+
+
+    priorityScore.textContent =
+      merged.priority_score
+      ?? "--";
+
+
+    affectedPeople.textContent =
+      merged.affected_people
+      ?? 0;
+
+
+    injuredPeople.textContent =
+      merged.injured_people
+      ?? 0;
+
+
+    trappedPeople.textContent =
+      merged.trapped_people
+      ?? 0;
+
+
+    // ----------------------------------------------------------
+    // Allocation
+    // ----------------------------------------------------------
+
+    try {
+
+      const allocation =
+        await apiFetch(
+          `/dashboard/allocations/${encodeURIComponent(id)}`
+        );
+
+      allocations[id] =
+        allocation;
+
+      renderAllocation(
+        allocation
+      );
+
+    } catch (error) {
+
+      console.warn(
+        "Allocation request failed:",
+        error
+      );
+
+      allocations[id] =
+        null;
+
+      renderAllocation(null);
+    }
+
+
+    const marker =
+      markers[id];
+
+    if (marker) {
+      marker.openPopup();
+    }
+  }
+
+
+  function clearSelectedIncident() {
+
+    selectedIdEl.textContent =
+      "--";
+
+    incidentTitle.textContent =
+      "Select an incident";
+
+    priorityBadge.textContent =
+      "--";
+
+    priorityBadge.className =
+      "priority-badge low";
+
+    priorityScore.textContent =
+      "--";
+
+    affectedPeople.textContent =
+      "--";
+
+    injuredPeople.textContent =
+      "--";
+
+    trappedPeople.textContent =
+      "--";
+
+    allocationResources.innerHTML =
+      `
+      <div class="text-[#b6a094] text-sm">
+        No allocation
+      </div>
+      `;
+
+    allocationReasons.textContent =
+      "Reasons: --";
+
+    allocationStatus.textContent =
+      "--";
+  }
+
+
+  // ============================================================
+  // ALLOCATION DISPLAY
+  // ============================================================
+
+  function renderAllocation(
+    allocation
+  ) {
+
+    if (!allocation) {
+
+      allocationStatus.textContent =
+        "No allocation";
+
+      allocationStatus.className =
+        "text-xs font-medium text-[#b6a094]";
+
+
+      allocationResources.innerHTML =
+        `
+        <div class="text-[#b6a094] text-sm">
+          No allocation plan
+        </div>
+        `;
+
+
+      allocationReasons.textContent =
+        "Reasons: --";
+
+      return;
+    }
+
+
+    const status =
+      allocation.allocation_status
+      || allocation.status
+      || "pending";
+
+
+    allocationStatus.textContent =
+      status;
+
+
+    allocationStatus.className =
+      `
+      text-xs font-medium
+      ${
+        status === "approved"
+          ? "text-emerald-400"
+          : status === "rejected"
+            ? "text-[#d9636b]"
+            : status === "modified"
+              ? "text-[#e07a3f]"
+              : "text-yellow-400"
+      }
+      `;
+
+
+    let recommended =
+      allocation.recommended_resources;
+
+
+    // ----------------------------------------------------------
+    // Support optimizer-native assignments.
+    // ----------------------------------------------------------
+
+    if (
+      !Array.isArray(
+        recommended
+      )
+    ) {
+
+      recommended =
+        Array.isArray(
+          allocation.assignments
+        )
+          ? allocation.assignments
+          : [];
+    }
+
+
+    if (
+      Array.isArray(recommended)
+      &&
+      recommended.length
+    ) {
+
+      allocationResources.innerHTML =
+        recommended
+          .map(resource => {
+
+            const resourceName =
+              resource.resource_type
+              || resource.resource_id
+              || "Resource";
+
+
+            const eta =
+              resource.eta_minutes
+              ?? resource.travel_time_min;
+
+
+            return `
+              <div
+                class="flex justify-between gap-2"
+              >
+
+                <span class="text-white">
+                  ${escapeHtml(
+                    displayResourceType(
+                      resourceName
+                    )
+                  )}
+
+                  ${
+                    resource.resource_id
+                      ? `
+                        <span
+                          class="text-[#8a7a6e] font-mono text-[10px]"
+                        >
+                          ${escapeHtml(
+                            resource.resource_id
+                          )}
+                        </span>
+                      `
+                      : ""
+                  }
+                </span>
+
+                ${
+                  eta !== undefined
+                    && eta !== null
+                    ? `
+                      <span
+                        class="text-[#b6a094]"
+                      >
+                        ETA ${escapeHtml(
+                          eta
+                        )}m
+                      </span>
+                    `
+                    : ""
+                }
+
+              </div>
+            `;
+          })
+          .join("");
+
+    } else {
+
+      allocationResources.innerHTML =
+        `
+        <div class="text-[#b6a094] text-sm">
+          No recommended resources
+        </div>
+        `;
+    }
+
+
+    const reasons =
+      allocation.reason
+      || allocation.reasons
+      || [];
+
+
+    if (Array.isArray(reasons)) {
+
+      allocationReasons.textContent =
+        `Reasons: ${
+          reasons.length
+            ? reasons.join(", ")
+            : "--"
+        }`;
+
+    } else {
+
+      allocationReasons.textContent =
+        `Reasons: ${reasons || "--"}`;
+    }
+  }
+
+
+  // ============================================================
+  // ACTIONS
+  // ============================================================
+
+  async function handleAction(
+    action
+  ) {
+
+    if (!selectedId) {
+
+      alert(
+        "No incident selected"
+      );
+
+      return;
+    }
+
+
+    const payload = {
+      incident_id:
+        selectedId,
+
+      action
+    };
+
+
+    try {
+
+      const data =
+        await apiFetch(
+          "/dashboard/allocations/action",
+          {
+            method: "POST",
+
+            body:
+              JSON.stringify(payload)
+          }
+        );
+
+
+      allocations[selectedId] =
+        data;
+
+
+      renderAllocation(
+        data
+      );
+
+
+      await loadData(true);
+
+    } catch (error) {
+
+      console.error(
+        "Allocation action failed:",
+        error
+      );
+
+
+      alert(
+        `Error: ${error.message}`
+      );
+    }
+  }
+
+
+  // ============================================================
+  // PRIORITY BREAKDOWN
+  // ============================================================
+
+  function updatePriorityBreakdown() {
+
+    const counts = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0
+    };
+
+
+    incidents.forEach(
+      incident => {
+
+        const priority =
+          normalizePriority(
+            incident.priority_level
+          );
+
+        counts[priority]++;
+      }
+    );
+
+
+    pCritical.textContent =
+      counts.critical;
+
+    pHigh.textContent =
+      counts.high;
+
+    pMedium.textContent =
+      counts.medium;
+
+    pLow.textContent =
+      counts.low;
+  }
+
+
+  function updateQuickStats() {
+
+    const counts = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0
+    };
+
+
+    incidents.forEach(
+      incident => {
+
+        const priority =
+          normalizePriority(
+            incident.priority_level
+          );
+
+        counts[priority]++;
+      }
+    );
+
+
+    qCritical.textContent =
+      counts.critical;
+
+    qHigh.textContent =
+      counts.high;
+
+    qMedium.textContent =
+      counts.medium;
+
+    qLow.textContent =
+      counts.low;
+  }
+
+
+  // ============================================================
+  // INCIDENT TABS
+  // ============================================================
+
+  document
+    .getElementById(
+      "incidentTabs"
+    )
+    .addEventListener(
+      "click",
+      event => {
+
+        const tab =
+          event.target.closest(
+            "[data-tab]"
+          );
+
+        if (!tab) {
+          return;
+        }
+
+
+        document
+          .querySelectorAll(
+            "#incidentTabs [data-tab]"
+          )
+          .forEach(
+            element => {
+
+              element.className =
+                element.className
+                  .replace(
+                    "tab-active",
+                    "tab-inactive"
+                  );
+            }
+          );
+
+
+        tab.className =
+          tab.className
+            .replace(
+              "tab-inactive",
+              "tab-active"
+            );
+
+
+        renderIncidentList(
+          tab.dataset.tab
+        );
+      }
+    );
+
+
+  // ============================================================
+  // RESOURCE FILTERS
+  // ============================================================
+
+  document
+    .querySelectorAll(
+      ".filter-tab"
+    )
+    .forEach(
+      tab => {
+
+        tab.addEventListener(
+          "click",
+          function() {
+
+            document
+              .querySelectorAll(
+                ".filter-tab"
+              )
+              .forEach(
+                element =>
+                  element.classList.remove(
+                    "filter-tab-active"
+                  )
+              );
+
+
+            this.classList.add(
+              "filter-tab-active"
+            );
+
+
+            activeResourceFilter =
+              this.dataset.filter;
+
+
+            renderResources();
+          }
+        );
+      }
+    );
+
+
+  // ============================================================
+  // INITIALIZATION
+  // ============================================================
+
+  (async function init() {
+
+    initMap();
+
+    await loadData(
+      false
+    );
+
+
+    setTimeout(
+      () => {
+
+        if (map) {
+          map.invalidateSize();
+        }
+
+      },
+      400
+    );
+
+
+    // Refresh the live dashboard every 5 seconds.
+    //
+    // This is deliberately polling rather than WebSockets:
+    // simple, reliable, and sufficient for the SIH prototype.
+    setInterval(
+      () => {
+        loadData(true);
+      },
+      REFRESH_INTERVAL_MS
+    );
+
+
+    window.__dashboard = {
+      incidents,
+      resources,
+      allocations,
+      selectIncident,
+      loadData
+    };
+
+  })();
+
+</script>
+
+</body>
+</html>
